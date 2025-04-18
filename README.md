@@ -1,194 +1,261 @@
-# Poll Application on GCP Infrastructure
+# Poll Application on Google Cloud Platform
 
-This repository contains a complete Terraform configuration for deploying a scalable and production-ready polling application on Google Cloud Platform (GCP).
+A production-ready, scalable polling application deployed on Google Cloud Platform (GCP) with automated CI/CD pipeline.
 
-## Project Architecture
+![GCP Poll App Architecture](https://mermaid.ink/img/pako:eNqFkstugzAQRX9l5FWrJGRFWoioklMpTVOlSbtpsxJibAdiGmw5Jg-V_HtNQh5N01R4Y-bO8dxr6AOnigFneWFQCsq5RXnmLbHIuLOm0iptqFJGSRUeC26Zfvbl1LLCFQs9F-m7Vhoj5wY3SBsntQY5jDpwwQ1aFE1HkQ7WTtbCVJ4WWnNXSj2IUiXwUlq0D9UflXf-OxSxXvXl64I7a1Ue6UFfSNf8v2qJbXtCQjAHXjiJGBki6gPM34pIrJC5gP0eUjI9n4AwyXTOYT-_QUw2FBN6GzEy5HQZTsZw8TCbQsJoOMXEcD5PnuZr8vxInEUinXwfC6mMnTa87cbzYNM1PVIpUfAR3Tf0vCbwRVPYsVfKQJHtrQNaM9k0lYGZl5A98ixI8tOT7zgbmXWG4GCEsE1k1u3FnRirzVRgOgxXrLJJurA7gAazcGQXz5cTX2Fvjfksi9wyzrKqhJhvF-_pANL5ZR4avkoxaBu0_QFfJdcr)
 
-The project deploys the following GCP resources:
+## Project Description
 
-1. **Google Kubernetes Engine (GKE)** cluster for container orchestration
-2. **Cloud SQL PostgreSQL** database for data persistence
-3. **Artifact Registry** repository for Docker image storage
-4. **VPC Network** with private subnets and firewall rules
-5. **Secret Manager** for securely storing database credentials
-6. **Cloud Build** for continuous integration and deployment
-
-## Application Components
-
-- **Frontend**: A web UI for creating and participating in polls
-- **Backend API**: Flask-based REST API for handling poll operations
-- **Database**: PostgreSQL database for storing poll data
-
-## Deployment Challenges and Solutions
-
-During the deployment process, we encountered several challenges that required careful configuration:
-
-### 1. GKE Node Pool Configuration Issues
-
-**Challenge**: When applying Terraform changes, we encountered errors with the Google Kubernetes Engine node pool configuration. Specifically, the error indicated that at least one of the attributes like `node_version`, `image_type`, etc. must be specified when modifying an existing node pool.
-
-**Solution**: 
-- Added the required `kubelet_config` block with essential settings:
-  - Set `cpu_manager_policy` to "none"
-  - Configured `cpu_cfs_quota` to false
-  - Set `pod_pids_limit` to 0
-- Added resource labels to preserve configuration during updates
-- Implemented a release channel for better version control
-
-### 2. Duplicate Service API Enablement
-
-**Challenge**: We had duplicate `google_project_service` resources for the Secret Manager API, which were present in both `main.tf` and `database.tf`.
-
-**Solution**:
-- Removed the duplicate declaration in `database.tf`
-- Ensured proper dependency ordering using `depends_on` attributes
-
-### 3. Security Concerns
-
-**Challenge**: The initial configuration had overly permissive settings that could pose security risks.
-
-**Solutions**:
-- **Database Access**: Removed the `0.0.0.0/0` authorized networks configuration that allowed any IP to access the database
-- **Firewall Rules**: Replaced overly permissive firewall rules with specific port-based rules:
-  - Restricted TCP traffic to ports 443, 8080, 8443, 10250, 6443, 5432
-  - Limited UDP traffic to ports 53 and 8472
-- **Private Networking**: Configured GKE to use private networking with a NAT gateway for outbound traffic
-
-### 4. Infrastructure Optimization
-
-**Challenge**: Optimizing the infrastructure for cost while maintaining functionality.
-
-**Solutions**:
-- Used smallest available machine types (e2-micro)
-- Configured minimal disk sizes
-- Set up proper auto-scaling and management policies
-- Utilized zonal deployments where appropriate for development environments
-
-## CI/CD Pipeline with Cloud Build
-
-We've implemented a robust CI/CD pipeline using Google Cloud Build to automate the building, testing, and deployment of application updates.
-
-### Architecture
-
-The CI/CD pipeline consists of the following components:
-- **Source Code Repository**: GitHub repository containing application code
-- **Cloud Build**: Service that automatically builds and deploys changes
-- **Artifact Registry**: Storage for container images
-- **Google Kubernetes Engine**: Deployment target for the application
-
-### Workflow
-
-1. Developers push code changes to GitHub repository
-2. Cloud Build trigger detects changes and initiates the build process
-3. The pipeline determines which services (frontend/backend) have changed
-4. Only modified services are built and pushed to Artifact Registry
-5. Kubernetes deployments are updated with the new image versions
+This project implements a web-based polling application where users can create polls, vote, and view results. The application is deployed on Google Cloud Platform using a robust DevOps infrastructure.
 
 ### Key Features
 
-- **Selective Building**: Only builds services that have code changes
-- **Automatic Deployment**: Updates Kubernetes deployments automatically
-- **Fast Feedback**: Provides build status directly in GitHub
-- **Consistent Environments**: Ensures all environments use the same build process
+- **Frontend**: Simple, responsive UI for creating and participating in polls
+- **Backend API**: RESTful API for handling poll data operations
+- **Database**: PostgreSQL database for persistent storage
+- **Infrastructure as Code**: Complete GCP infrastructure defined using Terraform
+- **Containerization**: Docker containers for consistent deployments
+- **Orchestration**: Kubernetes for scaling and management
+- **CI/CD Pipeline**: Automated build and deployment using Cloud Build
 
-### Setting Up the Pipeline
+## Architecture
 
-1. **Enable Cloud Build API**:
-   ```
-   gcloud services enable cloudbuild.googleapis.com
-   ```
+### Infrastructure Components
 
-2. **Grant Necessary Permissions**:
-   ```
-   # Allow Cloud Build to access GKE
-   gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-       --member="serviceAccount:YOUR_PROJECT_NUMBER@cloudbuild.gserviceaccount.com" \
-       --role="roles/container.developer"
-   ```
+- **Google Kubernetes Engine (GKE)**: Manages containerized application deployment
+- **Cloud SQL (PostgreSQL)**: Provides managed database services
+- **Artifact Registry**: Stores Docker container images
+- **Secret Manager**: Securely stores database credentials
+- **VPC Network**: Provides private networking with appropriate firewall rules
+- **Cloud Build**: Automates CI/CD workflow
 
-3. **Connect GitHub Repository**:
-   - Go to Cloud Build → Triggers
-   - Connect your GitHub repository
-   - Create a new trigger that runs on push to main branch
-   - Specify cloudbuild.yaml as the build configuration file
+### Application Components
 
-4. **Test the Pipeline**:
-   - Make changes to either frontend or backend code
-   - Push changes to the main branch
-   - Monitor the build in Cloud Build console
-   - Verify that the application updates in GKE
+- **Frontend**: Nginx-served static HTML/CSS/JS
+- **Backend**: Flask API with PostgreSQL database
+- **Network**: Private VPC with appropriate subnets and firewall rules
 
-## Environment Setup
+### Workflow
 
-### Prerequisites
+1. Developers push code to GitHub
+2. Cloud Build trigger detects changes
+3. Docker images are built and pushed to Artifact Registry
+4. Kubernetes deployments are updated with new image versions
+5. Application scales automatically based on demand
 
-- Google Cloud SDK installed and configured
-- Terraform CLI installed
-- Docker installed (for building application images)
+## Tech Stack
 
-### Deployment Steps
+### Cloud & Infrastructure
+- Google Cloud Platform (GCP)
+- Terraform for Infrastructure as Code
+- Google Kubernetes Engine (GKE)
+- Cloud SQL for PostgreSQL
+- Artifact Registry
+- Secret Manager
+- Virtual Private Cloud (VPC)
+- Cloud Build CI/CD
 
-1. **Initialize Terraform**:
-   ```
-   cd terraform
-   terraform init
-   ```
+### Development & Deployment
+- Docker for containerization
+- Kubernetes for orchestration
+- Git/GitHub for version control
+- Bash scripting
 
-2. **Apply Terraform Configuration**:
-   ```
-   terraform apply
-   ```
+### Application
+- Frontend: HTML, CSS, JavaScript
+- Backend: Python with Flask
+- Database: PostgreSQL
 
-3. **Connect to GKE Cluster**:
-   ```
-   gcloud container clusters get-credentials poll-app-cluster --zone us-central1-a --project YOUR_PROJECT_ID
-   ```
+## Prerequisites
 
-4. **Build and Push Docker Images**:
-   ```
-   # Configure Docker for Artifact Registry
-   gcloud auth configure-docker us-central1-docker.pkg.dev
-   
-   # Build images
-   docker build -t poll-frontend:latest ./poll-frontend
-   docker build -t poll-backend:latest ./poll-backend-api
-   
-   # Tag images
-   docker tag poll-frontend:latest us-central1-docker.pkg.dev/YOUR_PROJECT_ID/poll-app-images/poll-frontend:v1
-   docker tag poll-backend:latest us-central1-docker.pkg.dev/YOUR_PROJECT_ID/poll-app-images/poll-backend:v1
-   
-   # Push images
-   docker push us-central1-docker.pkg.dev/YOUR_PROJECT_ID/poll-app-images/poll-frontend:v1
-   docker push us-central1-docker.pkg.dev/YOUR_PROJECT_ID/poll-app-images/poll-backend:v1
-   ```
+Before you begin, ensure you have the following installed:
 
-5. **Deploy Application to GKE**:
-   ```
-   kubectl apply -f kubernetes/
-   ```
+- [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
+- [Terraform](https://www.terraform.io/downloads.html) (v1.0.0+)
+- [Docker](https://docs.docker.com/get-docker/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- [Git](https://git-scm.com/downloads)
 
-## Development Setup
+## Setup Instructions
 
-For local development, a Docker Compose configuration is provided:
+### 1. GCP Project Setup
 
+1. Create a new GCP project or use an existing one
+2. Enable billing for the project
+3. Set up your gcloud CLI:
+
+```bash
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
 ```
+
+### 2. Clone the Repository
+
+```bash
+git clone https://github.com/Suthraye-Shriram/poll-app.git
+cd poll-app
+```
+
+### 3. Infrastructure Deployment
+
+1. Initialize Terraform:
+
+```bash
+cd terraform
+terraform init
+```
+
+2. Apply the Terraform configuration:
+
+```bash
+terraform apply
+```
+
+3. Note the outputs, which include commands to connect to GKE and other resources
+
+### 4. Application Deployment
+
+#### Option 1: Manual Deployment
+
+1. Configure Docker for Artifact Registry:
+
+```bash
+gcloud auth configure-docker us-central1-docker.pkg.dev
+```
+
+2. Build and push Docker images:
+
+```bash
+# Build images
+docker build -t poll-frontend:latest ./poll-frontend
+docker build -t poll-backend:latest ./poll-backend-api
+
+# Tag images
+docker tag poll-frontend:latest us-central1-docker.pkg.dev/YOUR_PROJECT_ID/poll-app-images/poll-frontend:v1
+docker tag poll-backend:latest us-central1-docker.pkg.dev/YOUR_PROJECT_ID/poll-app-images/poll-backend:v1
+
+# Push images
+docker push us-central1-docker.pkg.dev/YOUR_PROJECT_ID/poll-app-images/poll-frontend:v1
+docker push us-central1-docker.pkg.dev/YOUR_PROJECT_ID/poll-app-images/poll-backend:v1
+```
+
+3. Connect to the GKE cluster:
+
+```bash
+gcloud container clusters get-credentials poll-app-cluster --zone us-central1-a --project YOUR_PROJECT_ID
+```
+
+4. Apply Kubernetes manifests:
+
+```bash
+kubectl apply -f kubernetes/
+```
+
+#### Option 2: Automated Deployment (CI/CD)
+
+1. Set up Cloud Build trigger (already configured in the repository):
+   - Go to Cloud Build section in GCP Console
+   - Connect your GitHub repository
+   - Create a trigger that watches the main branch
+   - Use the cloudbuild.yaml file in the repository
+
+2. Make code changes and push to GitHub:
+   - The CI/CD pipeline will automatically build and deploy your changes
+
+### 5. Accessing the Application
+
+1. Get the external IP of the frontend service:
+
+```bash
+kubectl get service poll-frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+2. Access the application in your browser using this IP address
+
+## CI/CD Pipeline
+
+The project uses Cloud Build for continuous integration and deployment:
+
+1. **Trigger**: Changes to the main branch automatically trigger the build process
+2. **Smart Building**: The pipeline intelligently builds only the services that have changed
+3. **Image Storage**: Built Docker images are stored in Artifact Registry
+4. **Deployment**: Kubernetes deployments are automatically updated with new image versions
+
+## Development Workflow
+
+### Local Development
+
+Use Docker Compose for local development:
+
+```bash
 docker-compose up
 ```
 
-This will start both the frontend and backend services with appropriate environment variables.
+This starts both frontend and backend services on your local machine.
 
-## Best Practices Implemented
+### Making Changes
 
-1. **Separation of Concerns**: Different Terraform files for different resource types
-2. **Security**: Private networking, minimal permissions, secure secret management
-3. **Infrastructure as Code**: Complete automation of infrastructure provisioning
-4. **Cost Optimization**: Appropriately sized resources for the application requirements
-5. **Maintainability**: Well-structured code with clear naming conventions
-6. **Continuous Integration/Deployment**: Automated build and deploy pipeline
+1. Develop and test locally
+2. Commit and push changes to GitHub
+3. Cloud Build automatically builds and deploys the changes
+4. Monitor build status in the Cloud Build console
 
-## Future Enhancements
+## Challenges and Solutions
 
-1. Add monitoring and alerting using Cloud Monitoring
-2. Implement horizontal pod autoscaling based on metrics
-3. Add backup and disaster recovery procedures
-4. Implement CloudArmor for additional security 
+During development, we encountered and solved several challenges:
+
+### GKE Node Pool Configuration
+
+**Challenge**: Node pool updates would fail due to immutable field modifications.
+**Solution**: Added required kubelet configuration and implemented a release channel for better version control.
+
+### Security Concerns
+
+**Challenge**: Initial configurations had overly permissive access controls.
+**Solution**: Implemented proper security practices:
+- Removed public database access
+- Added specific firewall rules
+- Configured private GKE networking
+- Implemented Secret Manager for credentials
+
+### Infrastructure Optimization
+
+**Challenge**: Balancing cost vs. performance.
+**Solution**: 
+- Used smallest viable machine types
+- Configured auto-scaling
+- Implemented zonal deployments for development
+
+## Future Improvements
+
+1. **Monitoring and Logging**: Implement Cloud Monitoring and Logging for better observability
+2. **Horizontal Pod Autoscaling**: Configure autoscaling based on metrics
+3. **High Availability**: Implement multi-zone or multi-region deployment
+4. **Backup and Disaster Recovery**: Implement automated backups and recovery procedures
+5. **Security Hardening**: Implement Cloud Armor for additional protection
+6. **Custom Domain and SSL**: Add custom domain with managed SSL certificates
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Permission Errors**: Ensure service accounts have the correct permissions
+2. **Connection Errors**: Check network settings and firewall rules
+3. **Deployment Failures**: Verify Kubernetes configurations and container health
+
+### Getting Help
+
+If you encounter issues:
+1. Check the logs in Cloud Build, GKE, and Cloud SQL
+2. Review the Terraform state and outputs
+3. Open an issue in the GitHub repository
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Google Cloud Platform documentation
+- Terraform and Kubernetes communities
+- All contributors to this project 
