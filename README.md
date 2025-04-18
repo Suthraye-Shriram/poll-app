@@ -13,8 +13,13 @@ This project deploys a full-stack poll application with the following components
 
 ## Accessing the Application
 
-The application is available at:
-- http://34.70.208.98
+The application can be accessed via the LoadBalancer's external IP address. To get the current IP:
+
+```bash
+kubectl get service poll-frontend -n poll-app -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+Then open the IP address in your browser: http://<EXTERNAL_IP>
 
 ## Repository Structure
 
