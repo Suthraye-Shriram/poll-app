@@ -2,7 +2,39 @@
 
 A production-ready, scalable polling application deployed on Google Cloud Platform (GCP) with automated CI/CD pipeline.
 
-![GCP Poll App Architecture](https://mermaid.ink/img/pako:eNqFkstugzAQRX9l5FWrJGRFWoioklMpTVOlSbtpsxJibAdiGmw5Jg-V_HtNQh5N01R4Y-bO8dxr6AOnigFneWFQCsq5RXnmLbHIuLOm0iptqFJGSRUeC26Zfvbl1LLCFQs9F-m7Vhoj5wY3SBsntQY5jDpwwQ1aFE1HkQ7WTtbCVJ4WWnNXSj2IUiXwUlq0D9UflXf-OxSxXvXl64I7a1Ue6UFfSNf8v2qJbXtCQjAHXjiJGBki6gPM34pIrJC5gP0eUjI9n4AwyXTOYT-_QUw2FBN6GzEy5HQZTsZw8TCbQsJoOMXEcD5PnuZr8vxInEUinXwfC6mMnTa87cbzYNM1PVIpUfAR3Tf0vCbwRVPYsVfKQJHtrQNaM9k0lYGZl5A98ixI8tOT7zgbmXWG4GCEsE1k1u3FnRirzVRgOgxXrLJJurA7gAazcGQXz5cTX2Fvjfksi9wyzrKqhJhvF-_pANL5ZR4avkoxaBu0_QFfJdcr)
+## Architecture Diagram
+
+```
++------------------+     +-------------------+     +------------------+
+|                  |     |                   |     |                  |
+|  GitHub Repo     +---->+  Cloud Build      +---->+  Artifact        |
+|  (Source Code)   |     |  (CI/CD Pipeline) |     |  Registry        |
+|                  |     |                   |     |                  |
++------------------+     +-------------------+     +---------+--------+
+                                                             |
+                                                             v
++------------------+     +-------------------+     +------------------+
+|                  |     |                   |     |                  |
+|  Cloud SQL       +<----+  GKE Cluster      +<----+  Docker Images  |
+|  (PostgreSQL)    |     |  (Kubernetes)     |     |                  |
+|                  |     |                   |     |                  |
++------------------+     +---------+---------+     +------------------+
+                                   |
+                                   v
+                         +------------------+
+                         |                  |
+                         |  Frontend &      |
+                         |  Backend Pods    |
+                         |                  |
+                         +------------------+
+                                   |
+                                   v
+                         +------------------+
+                         |                  |
+                         |  End Users       |
+                         |                  |
+                         +------------------+
+```
 
 ## Project Description
 
