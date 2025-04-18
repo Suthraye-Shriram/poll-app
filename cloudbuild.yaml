@@ -104,7 +104,7 @@ substitutions:
   _REPO_NAME: 'poll-app-images'
   _CLUSTER_NAME: 'poll-app-cluster'
   _ZONE: 'us-central1-a'
-  _NAMESPACE: 'default'
+  _NAMESPACE: 'poll-app'
   _FORCE_BUILD_ALL: 'false'
 
 # Images to be stored in Artifact Registry
@@ -113,4 +113,8 @@ images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/poll-backend:$COMMIT_SHA'
 
 # Timeout for the entire build (default is 10 minutes, but we extend it to 30)
-timeout: '1800s' 
+timeout: '1800s'
+
+# Fix for the logging error
+options:
+  logging: CLOUD_LOGGING_ONLY 
