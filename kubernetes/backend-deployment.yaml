@@ -48,11 +48,11 @@ spec:
               key: db_host
         resources:
           requests:
-            cpu: 100m
-            memory: 128Mi
+            memory: "64Mi"
+            cpu: "50m"
           limits:
-            cpu: 200m
-            memory: 256Mi
+            memory: "128Mi"
+            cpu: "100m"
         readinessProbe:
           httpGet:
             path: /api/health
