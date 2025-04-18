@@ -34,7 +34,8 @@ poll-project-gcp/
     ├── ARCHITECTURE.md     # Detailed architecture overview
     ├── DEPLOYMENT.md       # Deployment instructions
     ├── CHALLENGES.md       # Common issues and solutions
-    └── LEARNINGS.md        # Key learnings and best practices
+    ├── LEARNINGS.md        # Key learnings and best practices
+    └── CLEANUP.md          # Resource cleanup instructions
 ```
 
 ## Deployment
@@ -52,6 +53,10 @@ For common issues and their solutions, see [CHALLENGES.md](docs/CHALLENGES.md).
 ## Learnings and Best Practices
 
 For key insights and lessons learned from this project, see [LEARNINGS.md](docs/LEARNINGS.md).
+
+## Cleanup and Resource Destruction
+
+For instructions on safely destroying all GCP resources, see [CLEANUP.md](docs/CLEANUP.md).
 
 ## Development
 
