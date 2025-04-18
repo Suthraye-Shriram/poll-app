@@ -8,7 +8,7 @@ resource "google_project_service" "cloudbuild" {
 resource "google_project_iam_member" "cloudbuild_gke" {
   project = local.project_id
   role    = "roles/container.developer"
-  member  = "serviceAccount:${local.project_id}@cloudbuild.gserviceaccount.com"
+  member  = "serviceAccount:131728914629@cloudbuild.gserviceaccount.com"
   depends_on = [google_project_service.cloudbuild]
 }
 
@@ -16,7 +16,7 @@ resource "google_project_iam_member" "cloudbuild_gke" {
 resource "google_project_iam_member" "cloudbuild_artifactregistry" {
   project = local.project_id
   role    = "roles/artifactregistry.admin"
-  member  = "serviceAccount:${local.project_id}@cloudbuild.gserviceaccount.com"
+  member  = "serviceAccount:131728914629@cloudbuild.gserviceaccount.com"
   depends_on = [google_project_service.cloudbuild]
 }
 
@@ -24,7 +24,7 @@ resource "google_project_iam_member" "cloudbuild_artifactregistry" {
 resource "google_project_iam_member" "cloudbuild_secretmanager" {
   project = local.project_id
   role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${local.project_id}@cloudbuild.gserviceaccount.com"
+  member  = "serviceAccount:131728914629@cloudbuild.gserviceaccount.com"
   depends_on = [google_project_service.cloudbuild]
 }
 
@@ -35,8 +35,8 @@ resource "google_project_iam_member" "cloudbuild_secretmanager" {
 #   name        = "poll-app-deploy"
 #   description = "Build and deploy Poll App when code is pushed to main branch"
 #   github {
-#     owner = "YOUR_GITHUB_USERNAME"
-#     name  = "poll-project-gcp"
+#     owner = "Suthraye-Shriram"
+#     name  = "poll-app"
 #     push {
 #       branch = "^main$"
 #     }
@@ -59,7 +59,7 @@ output "cloudbuild_setup_instructions" {
     3. Create a trigger with these settings:
        - Name: poll-app-deploy
        - Event: Push to a branch
-       - Source: Your repository
+       - Source: Your repository (https://github.com/Suthraye-Shriram/poll-app)
        - Branch: ^main$
        - Configuration: Repository
        - Location: /cloudbuild.yaml
