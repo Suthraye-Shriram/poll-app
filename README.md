@@ -33,7 +33,8 @@ poll-project-gcp/
 └── docs/                   # Documentation
     ├── ARCHITECTURE.md     # Detailed architecture overview
     ├── DEPLOYMENT.md       # Deployment instructions
-    └── CHALLENGES.md       # Common issues and solutions
+    ├── CHALLENGES.md       # Common issues and solutions
+    └── LEARNINGS.md        # Key learnings and best practices
 ```
 
 ## Deployment
@@ -47,6 +48,10 @@ For a comprehensive overview of the system architecture, see [ARCHITECTURE.md](d
 ## Troubleshooting
 
 For common issues and their solutions, see [CHALLENGES.md](docs/CHALLENGES.md).
+
+## Learnings and Best Practices
+
+For key insights and lessons learned from this project, see [LEARNINGS.md](docs/LEARNINGS.md).
 
 ## Development
 
