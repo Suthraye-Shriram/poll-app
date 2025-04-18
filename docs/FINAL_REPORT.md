@@ -4,6 +4,11 @@
 
 The Poll Application on Google Cloud Platform has been successfully developed, deployed, and now properly decommissioned. This project demonstrated the implementation of a cloud-native application using modern DevOps practices and GCP services.
 
+## Project Information
+
+**Completion Date:** April 18, 2025  
+**Author:** Suthraye Shriram
+
 ## Key Accomplishments
 
 1. **Infrastructure as Code**
