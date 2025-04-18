@@ -51,9 +51,9 @@ resource "google_container_node_pool" "primary_nodes" {
   cluster    = google_container_cluster.primary.name
   node_count = 1
 
-  # Use cheapest available machine type
+  # Use e2-small instead of e2-micro for better performance
   node_config {
-    machine_type = "e2-micro"  # Free tier eligible
+    machine_type = "e2-small"  # Better performance for production workloads
     disk_size_gb = 10  # Minimum allowed
     disk_type    = "pd-standard"
 
