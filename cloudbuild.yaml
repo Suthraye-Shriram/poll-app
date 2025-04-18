@@ -12,7 +12,8 @@ steps:
         CHANGED_BACKEND=$(git diff --name-only $COMMIT_SHA^ $COMMIT_SHA | grep -q "poll-backend-api/" && echo "true" || echo "false")
         echo "CHANGED_FRONTEND=$CHANGED_FRONTEND" > /workspace/env_vars
         echo "CHANGED_BACKEND=$CHANGED_BACKEND" >> /workspace/env_vars
-        cat /workspace/env_vars
+        echo "Frontend changes: $CHANGED_FRONTEND"
+        echo "Backend changes: $CHANGED_BACKEND"
 
   # Step 2: Build frontend if changes detected
   - name: 'gcr.io/cloud-builders/docker'
@@ -22,9 +23,9 @@ steps:
       - '-c'
       - |
         source /workspace/env_vars
-        if [ "$$CHANGED_FRONTEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+        if [ "$CHANGED_FRONTEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
           echo "Building frontend image..."
-          docker build -t $${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-frontend:$COMMIT_SHA ./poll-frontend
+          docker build -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/poll-frontend:$COMMIT_SHA ./poll-frontend
         else
           echo "No frontend changes detected. Skipping build."
         fi
@@ -37,9 +38,9 @@ steps:
       - '-c'
       - |
         source /workspace/env_vars
-        if [ "$$CHANGED_BACKEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+        if [ "$CHANGED_BACKEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
           echo "Building backend image..."
-          docker build -t $${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-backend:$COMMIT_SHA ./poll-backend-api
+          docker build -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/poll-backend:$COMMIT_SHA ./poll-backend-api
         else
           echo "No backend changes detected. Skipping build."
         fi
@@ -52,9 +53,9 @@ steps:
       - '-c'
       - |
         source /workspace/env_vars
-        if [ "$$CHANGED_FRONTEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+        if [ "$CHANGED_FRONTEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
           echo "Pushing frontend image..."
-          docker push $${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-frontend:$COMMIT_SHA
+          docker push ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/poll-frontend:$COMMIT_SHA
         else
           echo "No frontend image to push. Skipping."
         fi
@@ -67,9 +68,9 @@ steps:
       - '-c'
       - |
         source /workspace/env_vars
-        if [ "$$CHANGED_BACKEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+        if [ "$CHANGED_BACKEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
           echo "Pushing backend image..."
-          docker push $${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-backend:$COMMIT_SHA
+          docker push ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/poll-backend:$COMMIT_SHA
         else
           echo "No backend image to push. Skipping."
         fi
@@ -83,16 +84,16 @@ steps:
       - |
         source /workspace/env_vars
         # Configure kubectl to connect to the GKE cluster
-        gcloud container clusters get-credentials $${_CLUSTER_NAME} --zone $${_ZONE} --project $PROJECT_ID
+        gcloud container clusters get-credentials ${_CLUSTER_NAME} --zone ${_ZONE} --project $PROJECT_ID
         
-        if [ "$$CHANGED_FRONTEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+        if [ "$CHANGED_FRONTEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
           echo "Updating frontend deployment..."
-          kubectl set image deployment/poll-frontend poll-frontend=$${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-frontend:$COMMIT_SHA --namespace $${_NAMESPACE}
+          kubectl set image deployment/poll-frontend poll-frontend=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/poll-frontend:$COMMIT_SHA --namespace ${_NAMESPACE}
         fi
         
-        if [ "$$CHANGED_BACKEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+        if [ "$CHANGED_BACKEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
           echo "Updating backend deployment..."
-          kubectl set image deployment/poll-backend poll-backend=$${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-backend:$COMMIT_SHA --namespace $${_NAMESPACE}
+          kubectl set image deployment/poll-backend poll-backend=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/poll-backend:$COMMIT_SHA --namespace ${_NAMESPACE}
         fi
     env:
       - 'CLOUDSDK_COMPUTE_ZONE=$_ZONE'
