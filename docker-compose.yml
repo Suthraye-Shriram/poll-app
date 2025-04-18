@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  poll-frontend:
+    build:
+      context: ./poll-frontend
+    container_name: poll-frontend-container
+    ports:
+      - "80:80" # Map host port 80 to container port 80
+    depends_on:
+      - poll-backend
+    networks:
+      - poll-network
+
+  poll-backend:
+    build:
+      context: ./poll-backend-api
+    container_name: poll-backend-container # This matches the hostname in frontend app.js
+    ports:
+      - "5000:5000" # Map host port 5000 to container port 5000
+    networks:
+      - poll-network
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+
+networks:
+  poll-network:
+    driver: bridge 

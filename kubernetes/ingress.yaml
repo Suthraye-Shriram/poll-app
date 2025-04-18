@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: poll-app-ingress
+  namespace: poll-app
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "poll-app-ip"
+    networking.gke.io/managed-certificates: "poll-app-cert"
+    # For HTTP only (no HTTPS/TLS), remove the managed-certificates annotation
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: poll-frontend
+            port:
+              number: 80 

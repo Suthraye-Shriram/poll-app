@@ -1,0 +1,116 @@
+# Cloud Build configuration for CI/CD pipeline
+steps:
+  # Step 1: Determine which service to build based on changes
+  - name: 'gcr.io/cloud-builders/git'
+    id: 'detect-changes'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Detecting changed services..."
+        CHANGED_FRONTEND=$(git diff --name-only $COMMIT_SHA^ $COMMIT_SHA | grep -q "poll-frontend/" && echo "true" || echo "false")
+        CHANGED_BACKEND=$(git diff --name-only $COMMIT_SHA^ $COMMIT_SHA | grep -q "poll-backend-api/" && echo "true" || echo "false")
+        echo "CHANGED_FRONTEND=$CHANGED_FRONTEND" > /workspace/env_vars
+        echo "CHANGED_BACKEND=$CHANGED_BACKEND" >> /workspace/env_vars
+        cat /workspace/env_vars
+
+  # Step 2: Build frontend if changes detected
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        source /workspace/env_vars
+        if [ "$$CHANGED_FRONTEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+          echo "Building frontend image..."
+          docker build -t $${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-frontend:$COMMIT_SHA ./poll-frontend
+        else
+          echo "No frontend changes detected. Skipping build."
+        fi
+
+  # Step 3: Build backend if changes detected
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-backend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        source /workspace/env_vars
+        if [ "$$CHANGED_BACKEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+          echo "Building backend image..."
+          docker build -t $${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-backend:$COMMIT_SHA ./poll-backend-api
+        else
+          echo "No backend changes detected. Skipping build."
+        fi
+
+  # Step 4: Push frontend image if built
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        source /workspace/env_vars
+        if [ "$$CHANGED_FRONTEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+          echo "Pushing frontend image..."
+          docker push $${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-frontend:$COMMIT_SHA
+        else
+          echo "No frontend image to push. Skipping."
+        fi
+
+  # Step 5: Push backend image if built
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-backend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        source /workspace/env_vars
+        if [ "$$CHANGED_BACKEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+          echo "Pushing backend image..."
+          docker push $${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-backend:$COMMIT_SHA
+        else
+          echo "No backend image to push. Skipping."
+        fi
+
+  # Step 6: Update Kubernetes deployments
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'deploy'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        source /workspace/env_vars
+        # Configure kubectl to connect to the GKE cluster
+        gcloud container clusters get-credentials $${_CLUSTER_NAME} --zone $${_ZONE} --project $PROJECT_ID
+        
+        if [ "$$CHANGED_FRONTEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+          echo "Updating frontend deployment..."
+          kubectl set image deployment/poll-frontend poll-frontend=$${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-frontend:$COMMIT_SHA --namespace $${_NAMESPACE}
+        fi
+        
+        if [ "$$CHANGED_BACKEND" = "true" ] || [ "$_FORCE_BUILD_ALL" = "true" ]; then
+          echo "Updating backend deployment..."
+          kubectl set image deployment/poll-backend poll-backend=$${_REGION}-docker.pkg.dev/$PROJECT_ID/$${_REPO_NAME}/poll-backend:$COMMIT_SHA --namespace $${_NAMESPACE}
+        fi
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=$_ZONE'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLUSTER_NAME'
+
+# Substitution variables with default values
+substitutions:
+  _REGION: 'us-central1'
+  _REPO_NAME: 'poll-app-images'
+  _CLUSTER_NAME: 'poll-app-cluster'
+  _ZONE: 'us-central1-a'
+  _NAMESPACE: 'default'
+  _FORCE_BUILD_ALL: 'false'
+
+# Images to be stored in Artifact Registry
+images:
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/poll-frontend:$COMMIT_SHA'
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/poll-backend:$COMMIT_SHA'
+
+# Timeout for the entire build (default is 10 minutes, but we extend it to 30)
+timeout: '1800s' 

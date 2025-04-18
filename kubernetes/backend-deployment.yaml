@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: poll-backend
+  namespace: poll-app
+  labels:
+    app: poll-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: poll-backend
+  template:
+    metadata:
+      labels:
+        app: poll-backend
+    spec:
+      containers:
+      - name: poll-backend
+        # Replace this placeholder with your actual image name after pushing to Artifact Registry
+        image: us-central1-docker.pkg.dev/gen-lang-client-0646199746/poll-app-images/poll-backend:v1
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_APP
+          value: "app.py"
+        - name: FLASK_ENV
+          value: "production"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: username
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: password
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: database
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: db_host
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: poll-backend
+  namespace: poll-app
+spec:
+  selector:
+    app: poll-backend
+  ports:
+  - port: 5000
+    targetPort: 5000
+  type: ClusterIP 
