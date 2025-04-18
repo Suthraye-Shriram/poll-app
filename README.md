@@ -2,6 +2,10 @@
 
 A cloud-native polling application deployed on Google Cloud Platform using Kubernetes (GKE) and Terraform.
 
+## Project Status
+
+This project has been successfully completed and all cloud resources have been decommissioned. For a complete project summary and final report, see [FINAL_REPORT.md](docs/FINAL_REPORT.md).
+
 ## Architecture
 
 This project deploys a full-stack poll application with the following components:
@@ -35,7 +39,8 @@ poll-project-gcp/
     ├── DEPLOYMENT.md       # Deployment instructions
     ├── CHALLENGES.md       # Common issues and solutions
     ├── LEARNINGS.md        # Key learnings and best practices
-    └── CLEANUP.md          # Resource cleanup instructions
+    ├── CLEANUP.md          # Resource cleanup instructions
+    └── FINAL_REPORT.md     # Project summary and conclusion
 ```
 
 ## Deployment
